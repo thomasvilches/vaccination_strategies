@@ -55,7 +55,7 @@ function run(myp::cv.ModelParameters, nsims=1000, folderprefix="./")
     #c1 = Symbol.((:LAT, :ASYMP, :INF, :PRE, :MILD,:IISO, :HOS, :ICU, :DED), :_INC)
     #c2 = Symbol.((:LAT, :ASYMP, :INF, :PRE, :MILD,:IISO, :HOS, :ICU, :DED), :_PREV)
     
-    c1 = Symbol.((:LAT, :HOS, :ICU, :DED,:LAT2, :HOS2, :ICU2, :DED2,:LAT3, :HOS3, :ICU3, :DED3,:LAT4, :HOS4, :ICU4, :DED4,:LAT5, :HOS5, :ICU5, :DED5,:LAT6, :HOS6, :ICU6, :DED6), :_INC)
+    c1 = Symbol.((:LAT, :HOS, :ICU, :DED,:LAT2, :HOS2, :ICU2, :DED2), :_INC)
     #c2 = Symbol.((:LAT, :HOS, :ICU, :DED,:LAT2, :HOS2, :ICU2, :DED2), :_PREV)
     for (k, df) in mydfs
         println("saving dataframe sim level: $k")
