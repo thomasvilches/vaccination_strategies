@@ -1,3 +1,8 @@
+#=
+To do list:
+- create the waning function
+- All vaccine efficacies within the code must be changed to an individual vaccine effectiveness (to account to the waning)
+=#
 module covid19abm
 using Base
 using Parameters, Distributions, StatsBase, StaticArrays, Random, Match, DataFrames
@@ -141,10 +146,17 @@ end
 
     ### we will need to change this part... we were working only with pfizer
 
-    days_to_protection::Array{Array{Int64,1},1} = [[14],[0;7]]
-    vac_efficacy_inf::Array{Array{Array{Float64,1},1},1} = [[[0.46],[0.6;0.861]],[[0.295],[0.6;0.895]],[[0.46*(1-strain_ef_red3)],[0.6*(1-strain_ef_red3);0.92*(1-strain_ef_red3)]],[[0.46*(1-strain_ef_red4)],[0.6*(1-strain_ef_red4);0.64]],[[0.46],[0.6;0.92]],[[0.46*(1-strain_ef_red3)],[0.6*(1-strain_ef_red3);0.92*(1-strain_ef_red3)]]] #### 50:5:80
-    vac_efficacy_symp::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.536],[0.62;0.937]],[[0.332],[0.66;0.94]],[[0.332],[0.62;0.88]],[[0.57],[0.66;0.94]],[[0.332],[0.66;0.94]]] #### 50:5:80
-    vac_efficacy_sev::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.541],[0.8;0.94]],[[0.34],[0.68;0.974]],[[0.34],[0.68;0.94]],[[0.62],[0.80;0.92]],[[0.34],[0.68;0.974]]]#### 50:5:80
+    days_to_protection_pfizer::Array{Array{Int64,1},1} = [[14],[0;7]]
+    vac_efficacy_inf_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.46],[0.6;0.861]],[[0.46*(1-strain_ef_red4)],[0.6*(1-strain_ef_red4);0.64]]] #### 50:5:80
+    vac_efficacy_symp_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
+    vac_efficacy_sev_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
+   
+    ### we will need to change this part... we were working only with pfizer
+
+    days_to_protection_moderna::Array{Array{Int64,1},1} = [[14],[0;7]]
+    vac_efficacy_inf_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.46],[0.6;0.861]],[[0.46*(1-strain_ef_red4)],[0.6*(1-strain_ef_red4);0.64]]] #### 50:5:80
+    vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
+    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
    
 
     time_change::Int64 = 999## used to calibrate the model
@@ -452,14 +464,16 @@ end
 
 function vac_update(x::Human)
     
+    
     if x.vac_status == 1
+        dtp = x.vaccine == :pfizer ? p.days_to_protection_pfizer : p.days_to_protection_moderna
         #x.index_day == 2 && error("saiu com indice 2")
-        if x.days_vac == p.days_to_protection[x.vac_status][1]#14
+        if x.days_vac == dtp[x.vac_status][1]#14
             x.protected = 1
-            x.index_day = min(length(p.days_to_protection[x.vac_status]),x.index_day+1)
-        elseif x.days_vac == p.days_to_protection[x.vac_status][x.index_day]#14
+            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
+        elseif x.days_vac == dtp[x.vac_status][x.index_day]#14
             x.protected = x.index_day
-            x.index_day = min(length(p.days_to_protection[x.vac_status]),x.index_day+1)
+            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
         end
         if !x.relaxed
             x.relaxed = p.relaxed &&  x.vac_status >= p.status_relax && x.days_vac >= p.relax_after ? true : false
@@ -467,13 +481,14 @@ function vac_update(x::Human)
         x.days_vac += 1
 
     elseif x.vac_status == 2
-        if x.days_vac == p.days_to_protection[x.vac_status][1]#0
+        dtp = x.vaccine == :pfizer ? p.days_to_protection_pfizer : p.days_to_protection_moderna
+        if x.days_vac == dtp[x.vac_status][1]#0
             x.protected = 1
-            x.index_day = min(length(p.days_to_protection[x.vac_status]),x.index_day+1)
+            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
 
-        elseif x.days_vac == p.days_to_protection[x.vac_status][x.index_day]#7
+        elseif x.days_vac == dtp[x.vac_status][x.index_day]#7
             x.protected = x.index_day
-            x.index_day = min(length(p.days_to_protection[x.vac_status]),x.index_day+1)
+            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
         end
         if !x.relaxed
             x.relaxed = p.relaxed &&  x.vac_status >= p.status_relax && x.days_vac >= p.relax_after ? true : false
