@@ -158,6 +158,8 @@ end
     vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
     vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
    
+    waning_rate_pfizer::Float64 = 0.0
+    waning_rate_moderna::Float64 = 0.0
 
     time_change::Int64 = 999## used to calibrate the model
     how_long::Int64 = 1## used to calibrate the model
@@ -481,7 +483,15 @@ function vac_update(x::Human)
         x.days_vac += 1
 
     elseif x.vac_status == 2
-        dtp = x.vaccine == :pfizer ? p.days_to_protection_pfizer : p.days_to_protection_moderna
+        if x.vaccine == :pfizer
+            dtp = p.days_to_protection_pfizer 
+            wr = p.waning_rate_pfizer
+            tw = p.waning_time_pfizer
+        else
+            dtp = p.days_to_protection_moderna
+            wr = p.waning_rate_moderna
+            tw = p.waning_time_moderna
+        end
         if x.days_vac == dtp[x.vac_status][1]#0
             x.protected = 1
             x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
@@ -494,8 +504,16 @@ function vac_update(x::Human)
             x.relaxed = p.relaxed &&  x.vac_status >= p.status_relax && x.days_vac >= p.relax_after ? true : false
         end
         x.days_vac += 1
+
+        waning_function(x,wr,tw)
     end
    
+end
+
+function waning_function(x::Human,wr::Float64,tw::Int64)
+    if x.days_vac >= tw
+        ### add the efficacies here
+    end
 end
 function reset_params(ip::ModelParameters)
     # the p is a global const
