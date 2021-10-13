@@ -283,7 +283,7 @@ function main(ip::ModelParameters,sim::Int64)
     end
     # start the time loop
     for st = 1:p.modeltime
-        if p.ins_sec_strain && st == p.time_sec_strain ##insert second strain
+        if p.ins_second_strain && st == p.time_second_strain ##insert second strain
             insert_infected(PRE, p.initialinf2, 4, 2)[1]
             h_init2 = findall(x->x.health  in (LAT2,MILD2,INF2,PRE2,ASYMP2),humans)
             h_init2 = [h_init2]
@@ -306,7 +306,7 @@ function main(ip::ModelParameters,sim::Int64)
         time_vac += 1
         time_pos > 0 && vac_time!(sim,vac_ind,time_pos+1,vac_rate_1,vac_rate_2)
         
-        println([time_vac length(findall(x-> x.vac_status == 2 && x.age >= 18,humans))])
+        #println([time_vac length(findall(x-> x.vac_status == 2 && x.age >= 18,humans))])
        
         _get_model_state(st, hmatrix) ## this datacollection needs to be at the start of the for loop
         dyntrans(st, grps,sim)
@@ -412,7 +412,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     end
 
     t = sum(vac_rate_1[time_pos,:]+vac_rate_2[time_pos,:])
-    println("Total $time_pos $remaining_doses $total_given $t")
+    #println("Total $time_pos $remaining_doses $total_given $t")
     if total_given > t
         error("vaccination")
     end
