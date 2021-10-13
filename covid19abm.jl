@@ -34,9 +34,9 @@ Base.@kwdef mutable struct Human
     comorbidity::Int8 = 0 ##does the individual has any comorbidity?
     vac_status::Int8 = 0 ##
 
-    ef_inf::Float64 = 0.0
-    ef_symp::Float64 = 0.0
-    ef_sev::Float64 = 0.0
+    ef_inf::Array{Float64,1} = [0.0]
+    ef_symp::Array{Float64,1} = [0.0]
+    ef_sev::Array{Float64,1} = [0.0]
 
     got_inf::Bool = false
     herd_im::Bool = false
@@ -96,7 +96,7 @@ end
     kid_comp::Float64 = 0.8
     #comor_comp::Float64 = 0.7 #prop comorbidade tomam
 
-    vac_period::Array{Int64,1} = [21]
+    vac_period::Array{Int64,1} = [21;28]
     
     vaccinating::Bool = true #vaccinating?
     pfizer_proportion::Float64 = 1.0
@@ -122,17 +122,17 @@ end
     baseline_ef_pfizer::Float64 = 0.8
     baseline_ef_moderna::Float64 = 0.7
 
-    days_to_protection_pfizer::Array{Array{Int64,1},1} = [[14],[7]]
-    vac_efficacy_inf_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer*(1-strain_ef_red4)]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer*(1-strain_ef_red4)]]] #### 50:5:80
-    vac_efficacy_symp_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer]]] #### 50:5:80
-    vac_efficacy_sev_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer]]]#### 50:5:80
+    days_to_protection_pfizer::Array{Int64,1} = [14,7]
+    vac_efficacy_inf_pfizer::Array{Array{Float64,1},1} = [[baseline_ef_pfizer/2,baseline_ef_pfizer/2*(1-strain_ef_red4)],[baseline_ef_pfizer,baseline_ef_pfizer*(1-strain_ef_red4)]]#### 50:5:80
+    vac_efficacy_symp_pfizer::Array{Array{Float64,1},1} = [[baseline_ef_pfizer/2,baseline_ef_pfizer/2*(1-strain_ef_red4)],[baseline_ef_pfizer,baseline_ef_pfizer*(1-strain_ef_red4)]]#### 50:5:80
+    vac_efficacy_sev_pfizer::Array{Array{Float64,1},1} = [[baseline_ef_pfizer/2,baseline_ef_pfizer/2*(1-strain_ef_red4)],[baseline_ef_pfizer,baseline_ef_pfizer*(1-strain_ef_red4)]]#### 50:5:80
    
     ### we will need to change this part... we were working only with pfizer
 
-    days_to_protection_moderna::Array{Array{Int64,1},1} = [[14],[7]]
-    vac_efficacy_inf_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna*(1-strain_ef_red4)]]] #### 50:5:80
-    vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]] #### 50:5:80
-    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]]#### 50:5:80
+    days_to_protection_moderna::Array{Int64,1} = [14,7]
+    vac_efficacy_inf_moderna::Array{Array{Float64,1},1} = [[baseline_ef_moderna/2,baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna,baseline_ef_moderna*(1-strain_ef_red4)]] #### 50:5:80
+    vac_efficacy_symp_moderna::Array{Array{Float64,1},1} = [[baseline_ef_moderna/2,baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna,baseline_ef_moderna*(1-strain_ef_red4)]] #### 50:5:80
+    vac_efficacy_sev_moderna::Array{Array{Float64,1},1} = [[baseline_ef_moderna/2,baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna,baseline_ef_moderna*(1-strain_ef_red4)]]#### 50:5:80
    
     waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
     waning_rate_moderna::Float64 = 0.02/30
@@ -435,20 +435,20 @@ function vac_update(x::Human)
             effsev = p.vac_efficacy_sev_moderna
         end
             
-        if x.days_vac == dtp[x.vac_status][1]
-            x.protected = 1
-            x.ef_inf = effinf[x.vac_status][x.protected]
-            x.ef_symp = effsymp[x.vac_status][x.protected]
-            x.ef_inf = effsev[x.vac_status][x.protected]
+        if x.days_vac == dtp[x.vac_status]
+            
+            x.ef_inf = effinf[x.vac_status]
+            x.ef_symp = effsymp[x.vac_status]
+            x.ef_inf = effsev[x.vac_status]
             
             x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
-        elseif x.days_vac == dtp[x.vac_status][x.index_day]
+        #= elseif x.days_vac == dtp[x.vac_status][x.index_day]
             x.protected = x.index_day
             x.ef_inf = effinf[x.vac_status][x.protected]
             x.ef_symp = effsymp[x.vac_status][x.protected]
             x.ef_inf = effsev[x.vac_status][x.protected]
             
-            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
+            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1) =#
         end
         if !x.relaxed
             x.relaxed = p.relaxed &&  x.vac_status >= p.status_relax && x.days_vac >= p.relax_after ? true : false
@@ -460,26 +460,31 @@ function vac_update(x::Human)
             dtp = p.days_to_protection_pfizer 
             wr = p.waning_rate_pfizer
             tw = p.waning_time_pfizer
+            effinf = p.vac_efficacy_inf_pfizer
+            effsymp = p.vac_efficacy_symp_pfizer
+            effsev = p.vac_efficacy_sev_pfizer
         else
             dtp = p.days_to_protection_moderna
             wr = p.waning_rate_moderna
             tw = p.waning_time_moderna
+            effinf = p.vac_efficacy_inf_moderna
+            effsymp = p.vac_efficacy_symp_moderna
+            effsev = p.vac_efficacy_sev_moderna
         end
-        if x.days_vac == dtp[x.vac_status][1]#0
-            x.protected = 1
-            x.ef_inf = effinf[x.vac_status][x.protected]
-            x.ef_symp = effsymp[x.vac_status][x.protected]
-            x.ef_inf = effsev[x.vac_status][x.protected]
+        if x.days_vac == dtp[x.vac_status]
+            x.ef_inf = effinf[x.vac_status]
+            x.ef_symp = effsymp[x.vac_status]
+            x.ef_inf = effsev[x.vac_status]
             
-            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
+            #x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
 
-        elseif x.days_vac == dtp[x.vac_status][x.index_day]#7
-            x.protected = x.index_day
-            x.ef_inf = effinf[x.vac_status][x.protected]
-            x.ef_symp = effsymp[x.vac_status][x.protected]
-            x.ef_inf = effsev[x.vac_status][x.protected]
-            
-            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
+            #=  elseif x.days_vac == dtp[x.vac_status][x.index_day]#7
+                    x.protected = x.index_day
+                    x.ef_inf = effinf[x.vac_status][x.protected]
+                    x.ef_symp = effsymp[x.vac_status][x.protected]
+                    x.ef_inf = effsev[x.vac_status][x.protected]
+                    
+                    x.index_day = min(length(dtp[x.vac_status]),x.index_day+1) =#
         end
         if !x.relaxed
             x.relaxed = p.relaxed &&  x.vac_status >= p.status_relax && x.days_vac >= p.relax_after ? true : false
@@ -494,20 +499,24 @@ end
 function waning_function(x::Human,wr::Float64,tw::Int64)
     if x.days_vac >= tw
         ### add the efficacies here
-        x.ef_inf = x.ef_inf - wr
-        x.ef_symp = x.ef_symp - wr
-        x.ef_sev = x.ef_sev - wr
+        x.ef_inf = x.ef_inf .- wr
+        x.ef_symp = x.ef_symp .- wr
+        x.ef_sev = x.ef_sev .- wr
+
+        for i in 1:length(x.ef_inf)
+            if x.ef_inf[i] < p.min_ef
+                x.ef_inf[i] = p.min_ef
+            end
+            if x.ef_symp[i] < p.min_ef
+                x.ef_symp[i] = p.min_ef
+            end
+            if x.ef_sev[i] < p.min_ef
+                x.ef_sev[i] = p.min_ef
+            end
+        end
     end
 
-    if x.ef_inf < p.min_ef
-        x.ef_inf = p.min_ef
-    end
-    if x.ef_symp < p.min_ef
-        x.ef_symp = p.min_ef
-    end
-    if x.ef_sev < p.min_ef
-        x.ef_sev = p.min_ef
-    end
+    
 end
 function reset_params(ip::ModelParameters)
     # the p is a global const
@@ -929,9 +938,9 @@ function move_to_latent(x::Human)
     g = findfirst(y-> y >= x.age, age_thres)
 
     if x.recovered
-        auxiliar = (1-p.vac_efficacy_symp[1][2][end])
+        auxiliar = (1-p.vac_efficacy_symp_pfizer[2][x.strain])
     else
-        aux = x.ef_symp
+        aux = x.ef_symp[x.strain]
         auxiliar = (1-aux)
     end
  
@@ -990,9 +999,9 @@ function move_to_pre(x::Human)
 
 
     if x.recovered
-        auxiliar = (1-p.vac_efficacy_sev[1][2][end])
+        auxiliar = (1-p.vac_efficacy_sev[2][x.strain])
     else
-        aux = x.ef_sev
+        aux = x.ef_sev[x.strain]
         auxiliar = (1-aux)
     end
 
@@ -1394,7 +1403,7 @@ function dyntrans(sys_time, grps,sim)
                     beta = _get_betavalue(sys_time, xhealth)
                     adj_beta = 0 # adjusted beta value by strain and vaccine efficacy
                     if y.health == SUS && y.swap == UNDEF
-                        aux = y.ef_inf
+                        aux = y.ef_inf[x.strain]
                         adj_beta = beta*(1-aux)
                     elseif (x.strain == 2 && y.health == REC && y.swap == UNDEF)
                         adj_beta = beta*(p.reduction_recovered) #0.21
