@@ -119,7 +119,8 @@ end
     ### we will need to change this part... we were working only with pfizer
 
     baseline_ef_pfizer::Float64 = 0.8
-    baseline_ef_moderna::Float64 = 0.7
+    effrate::Float64 = 0.75
+    baseline_ef_moderna::Float64 = effrate*baseline_ef_pfizer#0.7
 
     days_to_protection_pfizer::Array{Int64,1} = [14,7]
     vac_efficacy_inf_pfizer::Array{Array{Float64,1},1} = [[baseline_ef_pfizer/2,baseline_ef_pfizer/2*(1-strain_ef_red4)],[baseline_ef_pfizer,baseline_ef_pfizer*(1-strain_ef_red4)]]#### 50:5:80
@@ -134,10 +135,13 @@ end
     vac_efficacy_sev_moderna::Array{Array{Float64,1},1} = [[baseline_ef_moderna/2,baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna,baseline_ef_moderna*(1-strain_ef_red4)]]#### 50:5:80
    
     waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
-    waning_rate_moderna::Float64 = 0.02/30
+    diffwaning::Float64 = 0.02
+    waning_rate_moderna::Float64 = (waning_rate_pfizer-diffwaning)/30
     waning_time_pfizer::Int64 = 10
     waning_time_moderna::Int64 = 10
     min_ef::Float64 = 0.01
+    
+    
 
     time_change::Int64 = 999## used to calibrate the model
     how_long::Int64 = 1## used to calibrate the model
