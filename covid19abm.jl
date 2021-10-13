@@ -34,9 +34,9 @@ Base.@kwdef mutable struct Human
     comorbidity::Int8 = 0 ##does the individual has any comorbidity?
     vac_status::Int8 = 0 ##
 
-    ef_inf::Array{Float64,1} = [0.0]
-    ef_symp::Array{Float64,1} = [0.0]
-    ef_sev::Array{Float64,1} = [0.0]
+    ef_inf::Array{Float64,1} = [0.0;0.0]
+    ef_symp::Array{Float64,1} = [0.0;0.0]
+    ef_sev::Array{Float64,1} = [0.0;0.0]
 
     got_inf::Bool = false
     herd_im::Bool = false
@@ -99,17 +99,16 @@ end
     vac_period::Array{Int64,1} = [21;28]
     
     vaccinating::Bool = true #vaccinating?
-    pfizer_proportion::Float64 = 1.0
+    pfizer_proportion::Float64 = 0.5
     red_risk_perc::Float64 = 1.0 #relative isolation in vaccinated individuals
-    reduction_protection::Float64 = 0.0 #reduction in protection against infection
     days_Rt::Array{Int64,1} = [100;200;300] #days to get Rt
-
+    reduction_recovered::Float64 = 0.21
     
     ## Delta - B.1.617.2
     ins_second_strain::Bool = true #insert fourth strain?
     initialinf2::Int64 = 1 #number of initial infected of fourth strain
     time_second_strain::Int64 = 187 #when will the fourth strain introduced
-    second_strain_trans::Float64 = 1.3*1.5 #transmissibility compared to second strain strain
+    sec_strain_trans::Float64 = 1.3*1.5 #transmissibility compared to second strain strain
 
    
     strain_ef_red4::Float64 = 0.2 #reduction in efficacy against forth strain
@@ -136,8 +135,9 @@ end
    
     waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
     waning_rate_moderna::Float64 = 0.02/30
-    waning_time_pfizer::Int64 = 180
-    waning_time_moderna::Int64 = 180
+    waning_time_pfizer::Int64 = 10
+    waning_time_moderna::Int64 = 10
+    min_ef::Float64 = 0.01
 
     time_change::Int64 = 999## used to calibrate the model
     how_long::Int64 = 1## used to calibrate the model
@@ -439,9 +439,9 @@ function vac_update(x::Human)
             
             x.ef_inf = effinf[x.vac_status]
             x.ef_symp = effsymp[x.vac_status]
-            x.ef_inf = effsev[x.vac_status]
+            x.ef_sev = effsev[x.vac_status]
             
-            x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
+            #x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
         #= elseif x.days_vac == dtp[x.vac_status][x.index_day]
             x.protected = x.index_day
             x.ef_inf = effinf[x.vac_status][x.protected]
@@ -474,7 +474,7 @@ function vac_update(x::Human)
         if x.days_vac == dtp[x.vac_status]
             x.ef_inf = effinf[x.vac_status]
             x.ef_symp = effsymp[x.vac_status]
-            x.ef_inf = effsev[x.vac_status]
+            x.ef_sev = effsev[x.vac_status]
             
             #x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
 
