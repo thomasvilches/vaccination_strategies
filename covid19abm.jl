@@ -132,7 +132,7 @@ end
     days_to_protection_moderna::Array{Array{Int64,1},1} = [[14],[7]]
     vac_efficacy_inf_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna*(1-strain_ef_red4)]]] #### 50:5:80
     vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]] #### 50:5:80
-    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]]#### 50:5:80
+    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]]#### 50:5:80
    
     waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
     waning_rate_moderna::Float64 = 0.02/30
@@ -1358,7 +1358,7 @@ export _get_betavalue
         cnt = rand(negative_binomials_shelter(ag,p.contact_change_2))  # expensive operation, try to optimize
     end
     
-    if x.health in (DED,DED2,DED3)
+    if x.health in (DED,DED2)
         cnt = 0 
     end
     x.nextday_meetcnt = cnt
