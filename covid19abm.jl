@@ -136,29 +136,30 @@ end
     time_sixth_strain::Int64 = 212 #when will the sixth strain introduced
     sixth_strain_trans::Float64 = 1.2 #transmissibility of sixth strain
 
-
-    strain_ef_red3::Float64 = 0.8 #reduction in efficacy against third strain
-    strain_ef_red4::Float64 = 0.8 #reduction in efficacy against third strain
+    strain_ef_red4::Float64 = 0.2 #reduction in efficacy against forth strain
     mortality_inc::Float64 = 1.3 #The mortality increase when infected by strain 2
 
     #=------------ Vaccine Efficacy ----------------------------=#
 
     ### we will need to change this part... we were working only with pfizer
 
-    days_to_protection_pfizer::Array{Array{Int64,1},1} = [[14],[0;7]]
-    vac_efficacy_inf_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.46],[0.6;0.861]],[[0.46*(1-strain_ef_red4)],[0.6*(1-strain_ef_red4);0.64]]] #### 50:5:80
-    vac_efficacy_symp_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
-    vac_efficacy_sev_pfizer::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
+    baseline_ef_pfizer::Float64 = 0.8
+    baseline_ef_moderna::Float64 = 0.7
+
+    days_to_protection_pfizer::Array{Array{Int64,1},1} = [[14],[7]]
+    vac_efficacy_inf_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer*(1-strain_ef_red4)]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer*(1-strain_ef_red4)]]] #### 50:5:80
+    vac_efficacy_symp_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer]]] #### 50:5:80
+    vac_efficacy_sev_pfizer::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_pfizer/2],[baseline_ef_pfizer]],[[baseline_ef_pfizer/2],[baseline_ef_pfizer]]]#### 50:5:80
    
     ### we will need to change this part... we were working only with pfizer
 
-    days_to_protection_moderna::Array{Array{Int64,1},1} = [[14],[0;7]]
-    vac_efficacy_inf_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.46],[0.6;0.861]],[[0.46*(1-strain_ef_red4)],[0.6*(1-strain_ef_red4);0.64]]] #### 50:5:80
-    vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
-    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
+    days_to_protection_moderna::Array{Array{Int64,1},1} = [[14],[7]]
+    vac_efficacy_inf_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2*(1-strain_ef_red4)],[baseline_ef_moderna*(1-strain_ef_red4)]]] #### 50:5:80
+    vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]] #### 50:5:80
+    vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[[baseline_ef_moderna/2],[baseline_ef_moderna]],[[baseline_ef_moderna/2],[baseline_ef_moderna]]]#### 50:5:80
    
-    waning_rate_pfizer::Float64 = 0.0 ##Daily waning rate
-    waning_rate_moderna::Float64 = 0.0
+    waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
+    waning_rate_moderna::Float64 = 0.02/30
     waning_time_pfizer::Int64 = 180
     waning_time_moderna::Int64 = 180
 
