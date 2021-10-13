@@ -53,7 +53,6 @@ Base.@kwdef mutable struct Human
     vaccine_n::Int16 = 0
     protected::Int64 = 0
 end
-
 ## default system parameters
 @with_kw mutable struct ModelParameters @deftype Float64    ## use @with_kw from Parameters
     β = 0.0345       
@@ -105,37 +104,14 @@ end
     reduction_protection::Float64 = 0.0 #reduction in protection against infection
     days_Rt::Array{Int64,1} = [100;200;300] #days to get Rt
 
-    ##Alpha - B.1.1.7
-    sec_strain_trans::Float64 = 1.5#1.5 #transmissibility of second strain
-    ins_sec_strain::Bool = true #insert second strain?
-    initialinf2::Int64 = 1 #number of initial infected of second strain
-    time_sec_strain::Int64 = 178 #when will the second strain introduced -- Jan 3
-
-    ## Gamma - P.1
-    ins_third_strain::Bool = true #insert third strain?
-    initialinf3::Int64 = 1 #number of initial infected of third strain
-    time_third_strain::Int64 = 206 #when will the third strain introduced - P1 March 20
-    third_strain_trans::Float64 = 1.6 #transmissibility of third strain
-    reduction_recovered::Float64 = 0.21
-
+    
     ## Delta - B.1.617.2
-    ins_fourth_strain::Bool = true #insert fourth strain?
-    initialinf4::Int64 = 1 #number of initial infected of fourth strain
-    time_fourth_strain::Int64 = 187 #when will the fourth strain introduced
-    fourth_strain_trans::Float64 = 1.3 #transmissibility compared to second strain strain
+    ins_second_strain::Bool = true #insert fourth strain?
+    initialinf2::Int64 = 1 #number of initial infected of fourth strain
+    time_second_strain::Int64 = 187 #when will the fourth strain introduced
+    second_strain_trans::Float64 = 1.3*1.5 #transmissibility compared to second strain strain
 
-    ## Iota - B.1.526
-    ins_fifth_strain::Bool = true #insert fifth strain?
-    initialinf5::Int64 = 1 #number of initial infected of fifth strain
-    time_fifth_strain::Int64 = 190 #when will the fifth strain introduced
-    fifth_strain_trans::Float64 = 1.35 #transmissibility of fifth strain
-
-    ## Beta - B.1.351
-    ins_sixth_strain::Bool = true #insert third strain?
-    initialinf6::Int64 = 1 #number of initial infected of sixth strain
-    time_sixth_strain::Int64 = 212 #when will the sixth strain introduced
-    sixth_strain_trans::Float64 = 1.2 #transmissibility of sixth strain
-
+   
     strain_ef_red4::Float64 = 0.2 #reduction in efficacy against forth strain
     mortality_inc::Float64 = 1.3 #The mortality increase when infected by strain 2
 
@@ -211,10 +187,8 @@ export ModelParameters, HEALTH, Human, humans, BETAS
 
 function runsim(simnum, ip::ModelParameters)
     # function runs the `main` function, and collects the data as dataframes. 
-    hmatrix,hh1,hh2,hh3,hh4 = main(ip,simnum)            
+    hmatrix,hh1,hh2 = main(ip,simnum)            
 
-    ct_numbers = (ct_data.total_symp_id, ct_data.totaltrace, ct_data.totalisolated, 
-                    ct_data.iso_sus, ct_data.iso_lat, ct_data.iso_asymp, ct_data.iso_symp)
     ###use here to create the vector of comorbidity
     # get simulation age groups
     #ags = [x.ag for x in humans] # store a vector of the age group distribution 
@@ -248,20 +222,6 @@ function runsim(simnum, ip::ModelParameters)
         end
     end
 
-    R03 = zeros(Float64,size(hh3,1))
-
-    for i = 1:size(hh3,1)
-        if length(hh3[i]) > 0
-            R03[i] = length(findall(k -> k.sickby in hh3[i],humans))/length(hh3[i])
-        end
-    end
-
-    R04 = zeros(Float64,size(hh4,1))
-    for i = 1:size(hh4,1)
-        if length(hh4[i]) > 0
-            R04[i] = length(findall(k -> k.sickby in hh4[i],humans))/length(hh4[i])
-        end
-    end
 
     coverage1 = length(findall(x-> x.age >= 18 && x.vac_status >= 1,humans))/length(findall(x-> x.age >= 18,humans))
     coverage2 = length(findall(x-> x.age >= 18 && x.vac_status == 2,humans))/length(findall(x-> x.age >= 18,humans))
