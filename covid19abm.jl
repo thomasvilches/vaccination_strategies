@@ -100,14 +100,9 @@ end
     vac_period::Array{Int64,1} = [21]
     
     vaccinating::Bool = true #vaccinating?
-    drop_rate::Float64 = 0.0 #probability of not getting second dose
-    fixed_cov::Float64 = 0.4 #coverage of population
     pfizer_proportion::Float64 = 1.0
     red_risk_perc::Float64 = 1.0 #relative isolation in vaccinated individuals
     reduction_protection::Float64 = 0.0 #reduction in protection against infection
-    extra_dose::Bool = false #if it is turned on, extradoses are given to general population
-    extra_dose_n::Int64 = 0 #how many
-    extra_dose_day::Int64 = 999 #when extra doses are implemented
     days_Rt::Array{Int64,1} = [100;200;300] #days to get Rt
 
     ##Alpha - B.1.1.7
@@ -162,15 +157,17 @@ end
     vac_efficacy_symp_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.57],[0.66;0.94]],[[0.332],[0.62;0.88]]] #### 50:5:80
     vac_efficacy_sev_moderna::Array{Array{Array{Float64,1},1},1} = [[[0.62],[0.80;0.92]],[[0.34],[0.68;0.94]]]#### 50:5:80
    
-    waning_rate_pfizer::Float64 = 0.0
+    waning_rate_pfizer::Float64 = 0.0 ##Daily waning rate
     waning_rate_moderna::Float64 = 0.0
+    waning_time_pfizer::Int64 = 180
+    waning_time_moderna::Int64 = 180
 
     time_change::Int64 = 999## used to calibrate the model
     how_long::Int64 = 1## used to calibrate the model
     how_much::Float64 = 0.0## used to calibrate the model
     rate_increase::Float64 = how_much/how_long## used to calibrate the model
-    time_change_contact::Array{Int64,1} = [1;map(y-> 95+y,0:3);map(y->134+y,0:9);map(y->166+y,0:13);map(y->199+y,0:35)]
-    change_rate_values::Array{Float64,1} = [1.0;map(y-> 1.0-0.01*y,1:4);map(y-> 0.96-(0.055/10)*y,1:10);map(y-> 0.90+(0.1/14)*y,1:14);map(y-> 1.0-(0.34/36)*y,1:36)]
+    time_change_contact::Array{Int64,1} = [1]
+    change_rate_values::Array{Float64,1} = [1.0]
     contact_change_rate::Float64 = 1.0 #the rate that receives the value of change_rate_values
     contact_change_2::Float64 = 0.5 ##baseline number that multiplies the contact rate
 
@@ -188,8 +185,6 @@ end
     scenario::Symbol = :statuscuo
     
     ### after calibration, how much do we want to increase the contact rate... in this case, to reach 70%
-    ### 0.5*0.95 = 0.475, so we want to multiply this by 1.473684211
-    back_normal_rate::Float64 = 1.5151515#2.118644068=>1 # ####1.483050847 =>0.7
 end
 
 Base.@kwdef mutable struct ct_data_collect
@@ -310,8 +305,6 @@ function main(ip::ModelParameters,sim::Int64)
     h_init1 = findall(x->x.health  in (LAT,MILD,MISO,INF,PRE,ASYMP),humans)
     h_init1 = [h_init1]
     h_init2 = []
-    h_init3 = []
-    h_init4 = []
     ## save the preisolation isolation parameters
     _fpreiso = p.fpreiso
     p.fpreiso = 0
@@ -481,15 +474,14 @@ function vac_update(x::Human)
             effsev = p.vac_efficacy_sev_moderna
         end
             
-        #x.index_day == 2 && error("saiu com indice 2")
-        if x.days_vac == dtp[x.vac_status][1]#14
+        if x.days_vac == dtp[x.vac_status][1]
             x.protected = 1
             x.ef_inf = effinf[x.vac_status][x.protected]
             x.ef_symp = effsymp[x.vac_status][x.protected]
             x.ef_inf = effsev[x.vac_status][x.protected]
             
             x.index_day = min(length(dtp[x.vac_status]),x.index_day+1)
-        elseif x.days_vac == dtp[x.vac_status][x.index_day]#14
+        elseif x.days_vac == dtp[x.vac_status][x.index_day]
             x.protected = x.index_day
             x.ef_inf = effinf[x.vac_status][x.protected]
             x.ef_symp = effsymp[x.vac_status][x.protected]
