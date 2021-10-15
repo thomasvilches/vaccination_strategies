@@ -94,10 +94,10 @@ end
 function create_folder(ip::cv.ModelParameters,province="us")
     
     #RF = string("heatmap/results_prob_","$(replace(string(ip.β), "." => "_"))","_vac_","$(replace(string(ip.vaccine_ef), "." => "_"))","_herd_immu_","$(ip.herd)","_$strategy","cov_$(replace(string(ip.cov_val)))") ## 
-    main_folder = "/data/thomas-covid/states_us/"
+    main_folder = "/data/thomas-covid/vac_strategy/"
     #main_folder = "."
    
-    RF = string(main_folder,"/results_prob_","$(replace(string(ip.β), "." => "_"))","$(ip.effrate)_$(ip.diffwaning)_$(ip.file_index)_$(province)") ##  
+    RF = string(main_folder,"/results_prob_","$(replace(string(ip.β), "." => "_"))","$(ip.effrate)_$(ip.diffwaning)_$(ip.pfizer_proportion)_$(ip.file_index)_$(province)") ##  
    
     if !Base.Filesystem.isdir(RF)
         Base.Filesystem.mkpath(RF)
@@ -107,17 +107,17 @@ end
 
 
 
-function run_param_scen_cal(b::Float64,province::String="us",h_i::Int64 = 0,ic1::Int64=1,ic2::Int64=1,when2::Int64=1,red::Float64 = 0.0,index::Int64 = 0,dw::Float64=0.0,efrate::Float64=0.0,rc=[1.0],dc=[1],mt::Int64=500,vac::Bool=true,scen::String="statuscuo",alpha::Float64 = 1.0,alpha2::Float64 = 0.0,alpha3::Float64 = 1.0,nsims::Int64=500)
+function run_param_scen_cal(b::Float64,province::String="newyork",h_i::Int64 = 0,ic1::Int64=1,ic2::Int64=1,when2::Int64=1,red::Float64 = 0.0,index::Int64 = 0,proportion::Float64=1.0,dw::Float64=0.0,efrate::Float64=0.0,rc=[1.0],dc=[1],mt::Int64=500,vac::Bool=true,scen::String="statuscuo",alpha::Float64 = 1.0,alpha2::Float64 = 0.0,alpha3::Float64 = 1.0,nsims::Int64=500)
     
     
     #b = bd[h_i]
     #ic = init_con[h_i]
     @everywhere ip = cv.ModelParameters(β=$b,fsevere = 1.0,fmild = 1.0,vaccinating = $vac,
     herd = $(h_i),start_several_inf=true,initialinf=$ic1,initialinf2=$ic2,
-    time_sec_strain = $when2,strain_ef_red4 = $red,
-    effrate = $efrate, diffwaning = $dw,
-    status_relax = $dosis, relax_after = $ta,
-    file_index = $index,
+    time_second_strain = $when2,strain_ef_red4 = $red,
+    effrate = $efrate, diffwaning = $dw, pfizer_proportion = $proportion,
+    status_relax = 3, relax_after = 999,
+    file_index = $index, 
     modeltime=$mt, prov = Symbol($province), scenario = Symbol($scen), α = $alpha,
     time_change_contact = $dc,
     change_rate_values = $rc,
@@ -126,7 +126,6 @@ function run_param_scen_cal(b::Float64,province::String="us",h_i::Int64 = 0,ic1:
 
     folder = create_folder(ip,province)
 
-    #println("$v_e $(ip.vaccine_ef)")
     run(ip,nsims,folder)
    
 end

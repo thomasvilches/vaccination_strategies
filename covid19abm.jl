@@ -136,7 +136,7 @@ end
    
     waning_rate_pfizer::Float64 = 0.04/30 ##Daily waning rate
     diffwaning::Float64 = 0.02
-    waning_rate_moderna::Float64 = (waning_rate_pfizer-diffwaning)/30
+    waning_rate_moderna::Float64 = (waning_rate_pfizer-diffwaning/30)
     waning_time_pfizer::Int64 = 10
     waning_time_moderna::Int64 = 10
     min_ef::Float64 = 0.01
@@ -157,7 +157,7 @@ end
     status_relax::Int16 = 2
     relax_after::Int64 = 1
 
-    day_inital_vac::Int64 = 107 ###this must match to the matrices in matrice code
+    day_inital_vac::Int64 = 1 ###this must match to the matrices in matrice code
     
     α::Float64 = 1.0
     α2::Float64 = 0.0
@@ -707,7 +707,7 @@ function get_province_ag(prov)
         :mississippi => Distributions.Categorical(@SVector [0.061649467146974,0.200597819531213,0.384003287469814,0.190218298882213,0.163531126969785])
         :arkansas => Distributions.Categorical(@SVector [0.062450709191187,0.195660155530313,0.380966424592187,0.187325618231005,0.173597092455309])
         :usa => Distributions.Categorical(@SVector [0.059444636404977,0.188450296592341,0.396101793107413,0.189694011721906,0.166309262173363])
-        :newyorkcity   => Distributions.Categorical(@SVector [0.064000, 0.163000, 0.448000, 0.181000, 0.144000])
+        :newyorkcity => Distributions.Categorical(@SVector [0.064000, 0.163000, 0.448000, 0.181000, 0.144000])
         _ => error("shame for not knowing your canadian provinces and territories")
     end       
     return ret  
