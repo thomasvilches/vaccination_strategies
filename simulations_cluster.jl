@@ -97,7 +97,7 @@ function create_folder(ip::cv.ModelParameters,province="us")
     main_folder = "/data/thomas-covid/vac_strategy/"
     #main_folder = "."
    
-    RF = string(main_folder,"/results_prob_","$(replace(string(ip.β), "." => "_"))","$(ip.effrate)_$(ip.diffwaning)_$(ip.pfizer_proportion)_$(ip.file_index)_$(province)") ##  
+    RF = string(main_folder,"/results_prob_","$(replace(string(ip.β), "." => "_"))","_$(ip.effrate)_$(ip.diffwaning)_$(ip.pfizer_proportion)_$(ip.file_index)_$(province)") ##  
    
     if !Base.Filesystem.isdir(RF)
         Base.Filesystem.mkpath(RF)

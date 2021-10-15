@@ -673,6 +673,7 @@ export _collectdf, _get_incidence_and_prev, _get_column_incidence, _get_column_p
 ## initialization functions 
 function get_province_ag(prov) 
     ret = @match prov begin
+        :newmexico => Distributions.Categorical(@SVector [0.057699507208266,0.195879587701238,0.379771550279017,0.186565046553629,0.18008430825785])
         :wisconsin => Distributions.Categorical(@SVector [0.056762515470334,0.187481558399803,0.375762610619545,0.205282361294263,0.174710954216055])
         :newhampshire => Distributions.Categorical(@SVector [0.046790089952939,0.167253923811751,0.370258827059574,0.228992778612514,0.186704380563223])
         :colorado => Distributions.Categorical(@SVector [0.05768644369181,0.186806618674654,0.42620898058185,0.183013772466736,0.146284184584951])
