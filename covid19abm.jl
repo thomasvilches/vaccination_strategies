@@ -347,7 +347,46 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     ### lets create distribute the number of doses per age group
     
     remaining_doses::Int64 = 0
+    remaining_doses_pfizer::Int64 = 0
+    remaining_doses_moderna::Int64 = 0
     total_given::Int64 = 0
+
+    ###let's check how many doses are available on that day for second doses
+    #= total_doses_2::Int64 = sum(vac_rate_2[time_pos,:])
+    total_pfizer_2::Int64 = Int(round(total_doses_2*p.pfizer_proportion))
+    total_moderna_2::Int64 = total_doses_2 - total_pfizer_2
+
+    total_doses_1::Int64 = sum(vac_rate_1[time_pos,:])
+    total_pfizer_1::Int64 = Int(round(total_doses_1*p.pfizer_proportion))
+    total_moderna_1::Int64 = total_doses_1 - total_pfizer_1 =#
+    
+    total_doses::Int64 = sum(vac_rate_2[time_pos,:])+sum(vac_rate_1[time_pos,:])
+    total_pfizer::Int64 = Int(round(total_doses*p.pfizer_proportion))#total_pfizer_1+total_pfizer_2
+    total_moderna::Int64 = total_moderna-total_pfizer
+
+    ## we want to guarantee that a XX% of elderly people are getting pfizer
+    ### let's first give all second doses of pfizer and moderna
+
+    ### This is a more complicated scenario... we will need to sample for every dose that is given
+
+    
+
+    for i in 1:length(vac_ind)
+        pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && humans[y].vaccine_n == 1 && !(humans[y].health_status in aux_states),vac_ind[i])
+        ll = min(vac_rate_2[time_pos,i],total_pfizer)
+        l1 = min(ll,length(pos))
+        total_pfizer = (total_pfizer - l1)
+        for j = 1:l1
+            x = humans[vac_ind[i][pos[j]]]
+            x.days_vac = 0
+            x.vac_status = 2
+            x.index_day = 1
+            total_given += 1
+        end
+    end
+
+
+
     for i in 1:length(vac_ind)
         pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && !(humans[y].health_status in aux_states),vac_ind[i])
         

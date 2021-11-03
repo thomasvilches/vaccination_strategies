@@ -1,0 +1,11 @@
+Here I will start working on the vaccination process. The idea is that second doses will be prioritized.
+After that, there will be 3 different process (options) that will be be implemented in 3 different branches:
+
+Option 1: a x% of elderly people will be vaccinated with vaccine 1. If vaccine 1 is not enough to vaccinate the x%,
+them the proportion x% and (1-x)% will be kept and the remaining ones wont be vaccinated on that day
+Option 2: a x% of elderly people will be vaccinated with vaccine 1. If vaccine 1 is not enough to vaccinate the x%,
+them the proportion x% and (1-x)% will not be kept and the remaining individuals wont be vaccinated on that day
+Option 3: a x% of elderly people will be vaccinated with vaccine 1. If vaccine 1 is not enough to vaccinate the x%,
+them the proportion x% and (1-x)% will not be kept and the remaining individuals will be vaccinated with vaccine 2
+
+We will decide for one of the options later
