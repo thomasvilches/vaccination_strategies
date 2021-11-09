@@ -346,65 +346,188 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     rng = MersenneTwister(123*sim)
     ### lets create distribute the number of doses per age group
     
-    remaining_doses::Int64 = 0
-    remaining_doses_pfizer::Int64 = 0
-    remaining_doses_moderna::Int64 = 0
-    total_given::Int64 = 0
 
-    ###let's check how many doses are available on that day for second doses
-    #= total_doses_2::Int64 = sum(vac_rate_2[time_pos,:])
-    total_pfizer_2::Int64 = Int(round(total_doses_2*p.pfizer_proportion))
-    total_moderna_2::Int64 = total_doses_2 - total_pfizer_2
-
-    total_doses_1::Int64 = sum(vac_rate_1[time_pos,:])
-    total_pfizer_1::Int64 = Int(round(total_doses_1*p.pfizer_proportion))
-    total_moderna_1::Int64 = total_doses_1 - total_pfizer_1 =#
-    
     total_doses::Int64 = sum(vac_rate_2[time_pos,:])+sum(vac_rate_1[time_pos,:])
     total_pfizer::Int64 = Int(round(total_doses*p.pfizer_proportion))#total_pfizer_1+total_pfizer_2
     total_moderna::Int64 = total_moderna-total_pfizer
 
+    remaining_doses::Int64 = total_doses
+    remaining_doses_pfizer::Int64 = total_pfizer
+    remaining_doses_moderna::Int64 = total_moderna
+    total_given::Int64 = 0
     ## we want to guarantee that a XX% of elderly people are getting pfizer
     ### let's first give all second doses of pfizer and moderna
 
     ### This is a more complicated scenario... we will need to sample for every dose that is given
-
+    #= Idea:
+    Let
+    vv = shuffle(1:length(vac_ind))
+        for i in vv 
+        randomly pick up one individual to be vaccinated, giving pfizer or moderna
+        IMPORTANT:
+        if #pfizer & #moderna > 0 : selec from both vaccines
+        elseif #pfizer > 0 : select from pfizer
+        elseif #moderna > 0 : select from moderna
+        account for these vaccines subtracting from the remaining ones 
+        
+        Distribute the remaining ones to non-vaccinated individuals following the rules that are proposed in each option=#
     
+    vv = shuffle(1:length(vac_ind))
 
-    for i in 1:length(vac_ind)
-        pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && humans[y].vaccine_n == 1 && !(humans[y].health_status in aux_states),vac_ind[i])
-        ll = min(vac_rate_2[time_pos,i],total_pfizer)
-        l1 = min(ll,length(pos))
-        total_pfizer = (total_pfizer - l1)
-        for j = 1:l1
-            x = humans[vac_ind[i][pos[j]]]
+    for i in vv
+        for jj in 1:vac_rate_2[time_pos,i]
+            if remaining_doses_pfizer > 0 && remaining_doses_moderna > 0
+                pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && !(humans[y].health_status in aux_states),vac_ind[i])
+                
+            elseif remaining_doses_pfizer > 0 
+                pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && humans[y].vaccine_n == 1 && !(humans[y].health_status in aux_states),vac_ind[i])
+        
+            elseif remaining_doses_moderna > 0
+                pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && humans[y].vaccine_n == 2 && !(humans[y].health_status in aux_states),vac_ind[i])
+            
+            else
+                break
+            end
+
+            r = rand(pos)
+            x = humans[vac_ind[i][r]]
             x.days_vac = 0
             x.vac_status = 2
             x.index_day = 1
             total_given += 1
+            remaining_doses -= 1
+            remaining_doses_pfizer -= 1-(x.vaccine_n-1)
+            remaining_doses_moderna -= -(1-x.vaccine_n)
+        end
+    end
+
+    ###first of all we want to make sure that 65+ receives the right proportion in first doses.
+    ### for the sake of simplicity, lets use 65+ as one entire group
+
+    pos1 = findall(y-> humans[y].vac_status == 0 !(humans[y].health_status in aux_states),vac_ind[end])
+    pos2 = findall(y-> humans[y].vac_status == 0 !(humans[y].health_status in aux_states),vac_ind[end-1])
+    pos = [pos1;pos2]
+    idx = vac_ind[pos]
+    aux = sum(vac_rate_1[time_pos,end-1:end])
+    aux_p = Int(round(p.proportion_pfizer_elder*aux))
+    aux_m = aux-aux_p
+
+    if remaining_doses_pfizer >= aux_p ### all the possibilities
+        
+        if remaining_doses_moderna >= aux_m
+            idx_aux = sample(idx,aux_p,replace=false) 
+            for ii in idx_aux
+                x = humans[ii]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :pfizer
+                x.vaccine_n = 1
+                total_given += 1
+                remaining_doses_pfizer -= 1
+                remaining_doses -= 1
+            end
+
+            idx = filter(kk-> !(kk in idx_aux),idx)
+            idx_aux = sample(idx,aux_m,replace=false) 
+            for ii in idx_aux
+                x = humans[ii]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :moderna
+                x.vaccine_n = 2
+                total_given += 1
+                remaining_doses_moderna -= 1
+                remaining_doses -= 1
+            end
+
+        
+        else
+            aux_p += aux_m-remaining_doses_moderna
+            aux_m = remaining_doses_moderna
+
+            idx_aux = sample(idx,aux_p,replace=false) 
+            for ii in idx_aux
+                x = humans[i]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :pfizer
+                x.vaccine_n = 1
+                total_given += 1
+                remaining_doses_pfizer -= 1
+                remaining_doses -= 1
+            end
+
+            idx = filter(kk-> !(kk in idx_aux),idx)
+            idx_aux = sample(idx,aux_m,replace=false) 
+            for ii in idx_aux
+                x = humans[i]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :moderna
+                x.vaccine_n = 2
+                total_given += 1
+                remaining_doses_moderna -= 1
+                remaining_doses -= 1
+            end
+
+        end
+    else
+        if remaining_doses_moderna >= aux_m
+            aux_m += aux_p-remaining_doses_pfizer
+            aux_p = remaining_doses_pfizer
+
+            idx_aux = sample(idx,aux_p,replace=false) 
+            for ii in idx_aux
+                x = humans[i]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :pfizer
+                x.vaccine_n = 1
+                total_given += 1
+                remaining_doses_pfizer -= 1
+                remaining_doses -= 1
+            end
+
+            idx = filter(kk-> !(kk in idx_aux),idx)
+            idx_aux = sample(idx,aux_m,replace=false) 
+            for ii in idx_aux
+                x = humans[i]
+                x.days_vac = 0
+                x.vac_status = 1
+                x.index_day = 1
+
+                x.vaccine = :moderna
+                x.vaccine_n = 2
+                total_given += 1
+                remaining_doses_moderna -= 1
+                remaining_doses -= 1
+            end
+        else
+            error("doses disapeared")
         end
     end
 
 
+    v_one = ones(Int64,remaining_doses_pfizer)
+    v_two = 2*ones(Int64,remaining_doses_moderna)
 
-    for i in 1:length(vac_ind)
-        pos = findall(y-> humans[y].vac_status == 1 && humans[y].days_vac >= p.vac_period[humans[y].vaccine_n] && !(humans[y].health_status in aux_states),vac_ind[i])
-        
-        l1 = min(vac_rate_2[time_pos,i],length(pos))
-        remaining_doses += (vac_rate_2[time_pos,i] - l1)
-        for j = 1:l1
-            x = humans[vac_ind[i][pos[j]]]
-            x.days_vac = 0
-            x.vac_status = 2
-            x.index_day = 1
-            total_given += 1
-        end
+    v = shuffle([v_one;v_two])
+    given::Int64 = 1
+    for i in 1:(length(vac_ind)-2)
 
         pos = findall(y-> humans[y].vac_status == 0 && !(humans[y].health_status in aux_states),vac_ind[i])
         
         l2 = min(vac_rate_1[time_pos,i],length(pos))
-
-        remaining_doses += (vac_rate_1[time_pos,i] - l2)
 
         for j = 1:l2
             x = humans[vac_ind[i][pos[j]]]
@@ -412,9 +535,15 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             x.vac_status = 1
             x.index_day = 1
     
-            x.vaccine = rand(rng) <= p.pfizer_proportion ? :pfizer : :moderna
-            x.vaccine_n = x.vaccine == :pfizer ? 1 : 2
+            x.vaccine = [:pfizer; :moderna][v[given]]
+            x.vaccine_n = v[given]
             total_given += 1
+            
+            remaining_doses -= 1
+            remaining_doses_pfizer -= 1-(v[given]-1)
+        
+            remaining_doses_moderna -= -(1-v[given])
+            given += 1
         end
 
     end
@@ -429,28 +558,67 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
         position = map(k-> vac_ind[k][pos[k]],aux)
         position2 = map(k-> vac_ind[k][pos2[k]],aux)
 
-        r = vcat(position...,position2...)
-        m = min(remaining_doses,length(r))
 
-        rr = sample(rng,r,m,replace=false)
+        pos = filter(kk->humans[kk].vaccine_n == 1, position)
+        m = min(remaining_doses_pfizer,length(r))
+
+        rr = sample(rng,pos,m,replace=false)
+        for i in rr
+            x = humans[i]
+            x.days_vac = 0
+            x.vac_status = 2
+            x.index_day = 1
+            remaining_doses_pfizer -= 1
+            remaining_doses -= 1
+            total_given += 1
+            
+        end
+
+        pos = filter(kk->humans[kk].vaccine_n == 2, position)
+        m = min(remaining_doses_moderna,length(r))
+
+        rr = sample(rng,pos,m,replace=false)
+
         
         for i in rr
             x = humans[i]
-            if x.vac_status == 0
-                x.days_vac = 0
-                x.vac_status = 1
-                x.index_day = 1
-                x.vaccine = rand(rng) <= p.pfizer_proportion ? :pfizer : :moderna
-                x.vaccine_n = x.vaccine == :pfizer ? 1 : 2
-                total_given += 1
-            elseif x.vac_status == 1
-                x.days_vac = 0
-                x.vac_status = 2
-                x.index_day = 1
-                total_given += 1
-            else
-                error("error in humans vac status - vac time")
-            end
+            x.days_vac = 0
+            x.vac_status = 2
+            x.index_day = 1
+            remaining_doses_moderna -= 1
+            remaining_doses -= 1
+            total_given += 1
+            
+        end
+
+        
+        m = min(remaining_doses,length(position2))
+
+        rr = sample(rng,position2,m,replace=false)
+        v_one = ones(Int64,remaining_doses_pfizer)
+        v_two = 2*ones(Int64,remaining_doses_moderna)
+
+        v = shuffle([v_one;v_two])
+        given = 1
+
+        for i in rr
+            x = humans[i]
+            x.days_vac = 0
+            x.vac_status = 1
+            x.index_day = 1
+    
+            x.vaccine = [:pfizer; :moderna][v[given]]
+            x.vaccine_n = v[given]
+            total_given += 1
+            
+            remaining_doses -= 1
+            
+            remaining_doses_pfizer -= 1-(v[given]-1)
+        
+            remaining_doses_moderna -= -(1-v[given])
+            
+            given += 1
+            
         end
     end
 
