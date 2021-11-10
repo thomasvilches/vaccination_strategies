@@ -372,7 +372,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
         
         Distribute the remaining ones to non-vaccinated individuals following the rules that are proposed in each option=#
     
-    vv = shuffle(1:length(vac_ind))
+    vv = shuffle(rng,1:length(vac_ind))
 
     for i in vv
         for jj in 1:vac_rate_2[time_pos,i]
@@ -389,7 +389,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
                 break
             end
 
-            r = rand(pos)
+            r = rand(rng,pos)
             x = humans[vac_ind[i][r]]
             x.days_vac = 0
             x.vac_status = 2
@@ -415,7 +415,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     if remaining_doses_pfizer >= aux_p ### all the possibilities
         
         if remaining_doses_moderna >= aux_m
-            idx_aux = sample(idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,aux_p,replace=false) 
             for ii in idx_aux
                 x = humans[ii]
                 x.days_vac = 0
@@ -430,7 +430,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,aux_m,replace=false) 
             for ii in idx_aux
                 x = humans[ii]
                 x.days_vac = 0
@@ -449,7 +449,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             aux_p += aux_m-remaining_doses_moderna
             aux_m = remaining_doses_moderna
 
-            idx_aux = sample(idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,aux_p,replace=false) 
             for ii in idx_aux
                 x = humans[i]
                 x.days_vac = 0
@@ -464,7 +464,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,aux_m,replace=false) 
             for ii in idx_aux
                 x = humans[i]
                 x.days_vac = 0
@@ -484,7 +484,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             aux_m += aux_p-remaining_doses_pfizer
             aux_p = remaining_doses_pfizer
 
-            idx_aux = sample(idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,aux_p,replace=false) 
             for ii in idx_aux
                 x = humans[i]
                 x.days_vac = 0
@@ -499,7 +499,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,aux_m,replace=false) 
             for ii in idx_aux
                 x = humans[i]
                 x.days_vac = 0
@@ -521,7 +521,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     v_one = ones(Int64,remaining_doses_pfizer)
     v_two = 2*ones(Int64,remaining_doses_moderna)
 
-    v = shuffle([v_one;v_two])
+    v = shuffle(rng,[v_one;v_two])
     given::Int64 = 1
     for i in 1:(length(vac_ind)-2)
 
