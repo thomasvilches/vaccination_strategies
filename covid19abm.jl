@@ -414,10 +414,11 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
     aux_p = Int(round(p.proportion_pfizer_elder*aux))
     aux_m = aux-aux_p
 
+    
     if remaining_doses_pfizer >= aux_p ### all the possibilities
         
         if remaining_doses_moderna >= aux_m
-            idx_aux = sample(rng,idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_p),replace=false) 
             for ii in idx_aux
                 x = humans[ii]
                 x.days_vac = 0
@@ -432,7 +433,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(rng,idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_m),replace=false) 
             for ii in idx_aux
                 x = humans[ii]
                 x.days_vac = 0
@@ -451,9 +452,9 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             aux_p += aux_m-remaining_doses_moderna
             aux_m = remaining_doses_moderna
 
-            idx_aux = sample(rng,idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_p),replace=false) 
             for ii in idx_aux
-                x = humans[i]
+                x = humans[ii]
                 x.days_vac = 0
                 x.vac_status = 1
                 x.index_day = 1
@@ -466,9 +467,9 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(rng,idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_m),replace=false) 
             for ii in idx_aux
-                x = humans[i]
+                x = humans[ii]
                 x.days_vac = 0
                 x.vac_status = 1
                 x.index_day = 1
@@ -486,9 +487,9 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             aux_m += aux_p-remaining_doses_pfizer
             aux_p = remaining_doses_pfizer
 
-            idx_aux = sample(rng,idx,aux_p,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_p),replace=false) 
             for ii in idx_aux
-                x = humans[i]
+                x = humans[ii]
                 x.days_vac = 0
                 x.vac_status = 1
                 x.index_day = 1
@@ -501,9 +502,9 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             end
 
             idx = filter(kk-> !(kk in idx_aux),idx)
-            idx_aux = sample(rng,idx,aux_m,replace=false) 
+            idx_aux = sample(rng,idx,min(length(idx),aux_m),replace=false) 
             for ii in idx_aux
-                x = humans[i]
+                x = humans[ii]
                 x.days_vac = 0
                 x.vac_status = 1
                 x.index_day = 1
