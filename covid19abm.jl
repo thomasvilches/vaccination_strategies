@@ -100,6 +100,7 @@ end
     
     vaccinating::Bool = true #vaccinating?
     pfizer_proportion::Float64 = 0.5
+    proportion_pfizer_elder::Float64 = 0.75
     red_risk_perc::Float64 = 1.0 #relative isolation in vaccinated individuals
     days_Rt::Array{Int64,1} = [100;200;300] #days to get Rt
     reduction_recovered::Float64 = 0.21
@@ -349,7 +350,7 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
 
     total_doses::Int64 = sum(vac_rate_2[time_pos,:])+sum(vac_rate_1[time_pos,:])
     total_pfizer::Int64 = Int(round(total_doses*p.pfizer_proportion))#total_pfizer_1+total_pfizer_2
-    total_moderna::Int64 = total_moderna-total_pfizer
+    total_moderna::Int64 = total_doses-total_pfizer
 
     remaining_doses::Int64 = total_doses
     remaining_doses_pfizer::Int64 = total_pfizer
@@ -389,25 +390,26 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
                 break
             end
 
-            r = rand(rng,pos)
-            x = humans[vac_ind[i][r]]
-            x.days_vac = 0
-            x.vac_status = 2
-            x.index_day = 1
-            total_given += 1
-            remaining_doses -= 1
-            remaining_doses_pfizer -= 1-(x.vaccine_n-1)
-            remaining_doses_moderna -= -(1-x.vaccine_n)
+            if length(pos) > 0
+                r = rand(rng,pos)
+                x = humans[vac_ind[i][r]]
+                x.days_vac = 0
+                x.vac_status = 2
+                x.index_day = 1
+                total_given += 1
+                remaining_doses -= 1
+                remaining_doses_pfizer -= 1-(x.vaccine_n-1)
+                remaining_doses_moderna -= -(1-x.vaccine_n)
+            end
         end
     end
 
     ###first of all we want to make sure that 65+ receives the right proportion in first doses.
     ### for the sake of simplicity, lets use 65+ as one entire group
 
-    pos1 = findall(y-> humans[y].vac_status == 0 !(humans[y].health_status in aux_states),vac_ind[end])
-    pos2 = findall(y-> humans[y].vac_status == 0 !(humans[y].health_status in aux_states),vac_ind[end-1])
-    pos = [pos1;pos2]
-    idx = vac_ind[pos]
+    pos1 = findall(y-> humans[y].vac_status == 0 && !(humans[y].health_status in aux_states),vac_ind[end])
+    pos2 = findall(y-> humans[y].vac_status == 0 && !(humans[y].health_status in aux_states),vac_ind[end-1])
+    idx = [vac_ind[end][pos1];vac_ind[end-1][pos2]]
     aux = sum(vac_rate_1[time_pos,end-1:end])
     aux_p = Int(round(p.proportion_pfizer_elder*aux))
     aux_m = aux-aux_p
@@ -559,8 +561,8 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
         position2 = map(k-> vac_ind[k][pos2[k]],aux)
 
 
-        pos = filter(kk->humans[kk].vaccine_n == 1, position)
-        m = min(remaining_doses_pfizer,length(r))
+        pos = filter(kk->humans[kk].vaccine_n == 1, vcat(position...))
+        m = min(remaining_doses_pfizer,length(pos))
 
         rr = sample(rng,pos,m,replace=false)
         for i in rr
@@ -574,8 +576,8 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             
         end
 
-        pos = filter(kk->humans[kk].vaccine_n == 2, position)
-        m = min(remaining_doses_moderna,length(r))
+        pos = filter(kk->humans[kk].vaccine_n == 2, vcat(position...))
+        m = min(remaining_doses_moderna,length(pos))
 
         rr = sample(rng,pos,m,replace=false)
 
@@ -591,14 +593,14 @@ function vac_time!(sim::Int64,vac_ind::Vector{Vector{Int64}},time_pos::Int64,vac
             
         end
 
-        
-        m = min(remaining_doses,length(position2))
+        pos2 = vcat(position2...)
+        m = min(remaining_doses,length(pos2))
 
-        rr = sample(rng,position2,m,replace=false)
+        rr = sample(rng,pos2,m,replace=false)
         v_one = ones(Int64,remaining_doses_pfizer)
         v_two = 2*ones(Int64,remaining_doses_moderna)
 
-        v = shuffle([v_one;v_two])
+        v = shuffle(rng,[v_one;v_two])
         given = 1
 
         for i in rr
@@ -755,7 +757,6 @@ function _model_check()
     (p.fctcapture > 0 && p.fpreiso > 0) && error("Can not do contact tracing and ID/ISO of pre at the same time.")
     (p.fctcapture > 0 && p.maxtracedays == 0) && error("maxtracedays can not be zero")
 end
-
 ## Data Collection/ Model State functions
 function _get_model_state(st, hmatrix)
     # collects the model state (i.e. agent status at time st)
