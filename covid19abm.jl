@@ -117,8 +117,6 @@ end
 
     #=------------ Vaccine Efficacy ----------------------------=#
 
-    ### we will need to change this part... we were working only with pfizer
-
     baseline_ef_pfizer::Float64 = 0.8
     effrate::Float64 = 0.75
     baseline_ef_moderna::Float64 = effrate*baseline_ef_pfizer#0.7
